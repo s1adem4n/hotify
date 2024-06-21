@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto/hmac"
+	"crypto/sha256"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -64,12 +66,11 @@ const (
 )
 
 type Service struct {
-	Config     ServiceConfig
-	Path       string
-	Process    *os.Process
-	Status     ServiceStatus
-	Restarts   int
-	SecretHash string
+	Config   ServiceConfig
+	Path     string
+	Process  *os.Process
+	Status   ServiceStatus
+	Restarts int
 }
 
 func (s *Service) Clone() error {
@@ -258,8 +259,7 @@ func main() {
 
 	for _, service := range config.Services {
 		s := Service{Config: service, Path: filepath.Join(config.ServicesPath, service.Name)}
-		// Generate secret hash (sha1)
-		s.SecretHash = "sha1=" + fmt.Sprintf("%x", sha1.Sum([]byte(service.Secret)))
+
 		err := s.Init()
 		if err != nil {
 			slog.Error("Could not initialize service", "name", s.Config.Name, "err", err)
@@ -284,15 +284,27 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/hooks/{service}", func(w http.ResponseWriter, r *http.Request) {
-		signature := r.Header.Get("X-Hub-Signature")
+		signatureHeader := r.Header.Get("X-Hub-Signature-256")
 
 		service := r.PathValue("service")
 		for _, s := range services {
 			if s.Config.Name == service {
-				if s.Config.Secret != "" && s.SecretHash != signature {
-					slog.Warn("Invalid secret", "name", s.Config.Name, "signature", signature, "expected", s.SecretHash)
-					w.WriteHeader(403)
-					return
+				if s.Config.Secret != "" {
+					body, err := io.ReadAll(r.Body)
+					if err != nil {
+						w.WriteHeader(500)
+						return
+					}
+
+					signature := hmac.New(sha256.New, []byte(s.Config.Secret))
+					signature.Write([]byte(body))
+
+					expected := fmt.Sprintf("sha256=%x", signature.Sum(nil))
+					if signatureHeader != expected {
+						slog.Warn("Invalid signature", "service", s.Config.Name)
+						w.WriteHeader(403)
+						return
+					}
 				}
 
 				go s.Update()
