@@ -290,6 +290,7 @@ func main() {
 		for _, s := range services {
 			if s.Config.Name == service {
 				if s.Config.Secret != "" && s.SecretHash != signature {
+					slog.Warn("Invalid secret", "name", s.Config.Name, "signature", signature, "expected", s.SecretHash)
 					w.WriteHeader(403)
 					return
 				}
