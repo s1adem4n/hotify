@@ -6,3 +6,5 @@ name = "htest"
 repo = "https://github.com/s1adem4n/htest.git"
 exec = "build/htest"
 build = "go mod vendor && go build -o build/htest"
+restart = true
+maxRestarts = 5

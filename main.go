@@ -69,10 +69,11 @@ const (
 )
 
 type Service struct {
-	Config  ServiceConfig
-	Path    string
-	Process *os.Process
-	Status  ServiceStatus
+	Config   ServiceConfig
+	Path     string
+	Process  *os.Process
+	Status   ServiceStatus
+	Restarts int
 }
 
 func (s *Service) Clone() error {
@@ -204,26 +205,38 @@ func (s *Service) Start() error {
 	go func() {
 		state, _ := s.Process.Wait()
 
-		if s.Status != ServiceStatusStopped {
-			slog.Info("Service exited", "name", s.Config.Name, "code", state.ExitCode())
-
-			if s.Config.Restart {
-				s.Start()
-			} else {
-				s.Stop()
-			}
+		if s.Status == ServiceStatusStopped {
+			return
 		}
+
+		slog.Info("Service exited", "name", s.Config.Name, "code", state.ExitCode())
+
+		if !s.Config.Restart {
+			s.Stop() // mark as stopped, free resources
+			return
+		}
+
+		if s.Restarts >= s.Config.MaxRestarts {
+			slog.Error("Service reached max restarts", "name", s.Config.Name)
+			s.Stop()
+			return
+		}
+
+		s.Restarts++
+		slog.Info("Restarting service", "name", s.Config.Name, "restarts", s.Restarts)
+		s.Start()
 	}()
 
 	return nil
 }
 
 type ServiceConfig struct {
-	Name    string
-	Repo    string
-	Exec    string
-	Build   string
-	Restart bool
+	Name        string
+	Repo        string
+	Exec        string
+	Build       string
+	Restart     bool
+	MaxRestarts int
 }
 
 func main() {
