@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -142,9 +143,13 @@ func (s *Service) Build() error {
 	cmd := exec.Command("bash", "-c", s.Config.Build)
 	cmd.Dir = s.Path
 
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("build failed: %s, err: %v", buf.String(), err)
 	}
 
 	return nil
@@ -184,9 +189,13 @@ func (s *Service) Start() error {
 	cmd := exec.Command("bash", "-c", s.Config.Exec)
 	cmd.Dir = s.Path
 
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
 	err := cmd.Start()
 	if err != nil {
-		return err
+		return fmt.Errorf("start failed: %s, err: %v", buf.String(), err)
 	}
 
 	s.Process = cmd.Process
