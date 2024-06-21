@@ -3,9 +3,10 @@ Description=Hotify Service
 After=network.target
 
 [Service]
-ExecStart=hotify
+ExecStart=/path/to/hotify/binary
 Restart=always
-WorkingDirectory=/path/to/hotify
+# add required environment variables here
+# for example for golang or other things required for building and running your services
 
 [Install]
 WantedBy=multi-user.target
