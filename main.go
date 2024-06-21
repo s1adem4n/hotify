@@ -115,12 +115,12 @@ func (s *Service) Init() error {
 func (s *Service) Update() error {
 	slog.Info("Updating service", "name", s.Config.Name)
 
-	err := s.Pull()
+	err := s.Stop()
 	if err != nil {
 		return err
 	}
 
-	err = s.Stop()
+	err = s.Pull()
 	if err != nil {
 		return err
 	}
