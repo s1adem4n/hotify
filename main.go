@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/pelletier/go-toml/v2"
 )
@@ -155,14 +156,18 @@ func (s *Service) Stop() error {
 
 	// if process is running
 	if s.Process != nil {
-		err := s.Process.Signal(os.Interrupt)
-		if err != nil {
-			return err
-		}
+		waiting := true
 
-		_, err = s.Process.Wait()
-		if err != nil {
-			return err
+		go func() {
+			s.Process.Signal(os.Interrupt)
+			s.Process.Wait()
+			waiting = false
+		}()
+
+		time.Sleep(5 * time.Second)
+		if waiting {
+			slog.Info("Process did not exit after 5 seconds, killing", "name", s.Config.Name)
+			s.Process.Kill()
 		}
 	}
 
