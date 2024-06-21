@@ -160,7 +160,10 @@ func (s *Service) Stop() error {
 			return err
 		}
 
-		s.Process.Wait()
+		_, err = s.Process.Wait()
+		if err != nil {
+			return err
+		}
 	}
 
 	s.Process = nil
