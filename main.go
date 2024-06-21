@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -63,11 +64,12 @@ const (
 )
 
 type Service struct {
-	Config   ServiceConfig
-	Path     string
-	Process  *os.Process
-	Status   ServiceStatus
-	Restarts int
+	Config     ServiceConfig
+	Path       string
+	Process    *os.Process
+	Status     ServiceStatus
+	Restarts   int
+	SecretHash string
 }
 
 func (s *Service) Clone() error {
@@ -225,12 +227,20 @@ func (s *Service) Start() error {
 }
 
 type ServiceConfig struct {
-	Name        string
-	Repo        string
-	Exec        string
-	Build       string
-	Restart     bool
+	// Name of the service, used for logging and folder name
+	Name string
+	// Git repository URL
+	Repo string
+	// Command to execute to build the service, relative to the git repository
+	Exec string
+	// Command to execute to build the service, relative to the git repository
+	Build string
+	// Restart the service when it exits
+	Restart bool
+	// Maximum number of restarts before giving up
 	MaxRestarts int
+	// Webhook secret to trigger updates
+	Secret string
 }
 
 func main() {
@@ -248,6 +258,8 @@ func main() {
 
 	for _, service := range config.Services {
 		s := Service{Config: service, Path: filepath.Join(config.ServicesPath, service.Name)}
+		s.SecretHash = string(sha256.New().Sum([]byte(service.Secret)))
+
 		err := s.Init()
 		if err != nil {
 			slog.Error("Could not initialize service", "name", s.Config.Name, "err", err)
@@ -272,9 +284,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/hooks/{service}", func(w http.ResponseWriter, r *http.Request) {
+		signature := r.Header.Get("X-Hub-Signature")
+
 		service := r.PathValue("service")
 		for _, s := range services {
 			if s.Config.Name == service {
+				if s.Config.Secret != "" && s.SecretHash != signature {
+					w.WriteHeader(403)
+					return
+				}
+
 				go s.Update()
 
 				w.WriteHeader(200)
