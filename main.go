@@ -190,9 +190,10 @@ func (s *Service) Start() error {
 	s.Process = cmd.Process
 	go func() {
 		state, _ := s.Process.Wait()
-		slog.Info("Service exited", "name", s.Config.Name, "code", state.ExitCode())
 
 		if s.Status != ServiceStatusStopped {
+			slog.Info("Service exited", "name", s.Config.Name, "code", state.ExitCode())
+
 			if s.Config.Restart {
 				s.Start()
 			} else {
