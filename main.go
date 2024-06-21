@@ -252,7 +252,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /hooks/{service}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/hooks/{service}", func(w http.ResponseWriter, r *http.Request) {
 		service := r.PathValue("service")
 		for _, s := range services {
 			if s.Config.Name == service {
