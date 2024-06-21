@@ -9,3 +9,6 @@ build = "go mod vendor && go build -o build/htest"
 restart = true
 maxRestarts = 5
 secret = "verysecretgithubwebhooksecret"
+[services.proxy]
+address = "localhost:8080"
+upstream = "192.168.1.100"

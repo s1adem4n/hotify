@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"hotify/pkg/caddy"
 	"io"
 	"log/slog"
 	"net/http"
@@ -227,6 +228,13 @@ func (s *Service) Start() error {
 	return nil
 }
 
+type ProxyConfig struct {
+	// Address to listen on
+	Address string
+	// Upstream address
+	Upstream string
+}
+
 type ServiceConfig struct {
 	// Name of the service, used for logging and folder name
 	Name string
@@ -242,6 +250,8 @@ type ServiceConfig struct {
 	MaxRestarts int
 	// Webhook secret to trigger updates
 	Secret string
+	// Proxy configuration for Caddy
+	Proxy ProxyConfig
 }
 
 func main() {
@@ -255,10 +265,32 @@ func main() {
 		os.Exit(1)
 	}
 
+	caddyClient := caddy.CaddyClient{
+		Address:    "http://localhost:2019",
+		ServerName: "srv0",
+	}
+
+	err = caddyClient.Init()
+	if err != nil {
+		slog.Error("Could not initialize Caddy client", "err", err)
+	}
+
 	services := []*Service{}
 
 	for _, service := range config.Services {
 		s := Service{Config: service, Path: filepath.Join(config.ServicesPath, service.Name)}
+
+		if service.Proxy.Address != "" {
+			proxy := caddy.NewProxy(
+				caddy.GenerateID(s.Config.Name),
+				service.Proxy.Upstream,
+				service.Proxy.Address,
+			)
+			err := caddyClient.AddRoute(proxy)
+			if err != nil {
+				slog.Error("Could not add proxy", "name", service.Name, "err", err)
+			}
+		}
 
 		err := s.Init()
 		if err != nil {
