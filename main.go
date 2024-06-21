@@ -155,7 +155,11 @@ func (s *Service) Stop() error {
 
 	// if process is running
 	if s.Process != nil {
-		s.Process.Signal(os.Interrupt)
+		err := s.Process.Signal(os.Interrupt)
+		if err != nil {
+			return err
+		}
+
 		s.Process.Wait()
 	}
 
