@@ -256,17 +256,14 @@ func main() {
 		service := r.PathValue("service")
 		for _, s := range services {
 			if s.Config.Name == service {
-				err := s.Update()
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
-					return
-				}
+				go s.Update()
 
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(200)
 				return
 			}
 		}
+
+		w.WriteHeader(404)
 	})
 
 	go func() {
