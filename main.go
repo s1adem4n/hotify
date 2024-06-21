@@ -186,6 +186,8 @@ func (s *Service) Stop() error {
 func (s *Service) Start() error {
 	slog.Info("Starting service", "name", s.Config.Name)
 
+	s.Status = ServiceStatusRunning
+
 	cmd := exec.Command("bash", "-c", s.Config.Exec)
 	cmd.Dir = s.Path
 
