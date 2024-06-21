@@ -1,4 +1,5 @@
 address = ":1234"
+servicesPath = "services"
 
 [[services]]
 name = "htest"

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,8 +22,9 @@ import (
 // - Webhook support
 
 type Config struct {
-	Services []ServiceConfig
-	Address  string
+	Services     []ServiceConfig
+	Address      string
+	ServicesPath string
 }
 
 func (c *Config) Load(path string) error {
@@ -67,6 +69,7 @@ const (
 
 type Service struct {
 	Config  ServiceConfig
+	Path    string
 	Process *os.Process
 	Status  ServiceStatus
 }
@@ -74,7 +77,7 @@ type Service struct {
 func (s *Service) Clone() error {
 	slog.Info("Cloning service", "name", s.Config.Name)
 
-	err := CloneRepo(s.Config.Repo, filepath.Join("services", s.Config.Name))
+	err := CloneRepo(s.Config.Repo, s.Path)
 	if err != nil {
 		return err
 	}
@@ -85,7 +88,7 @@ func (s *Service) Clone() error {
 func (s *Service) Pull() error {
 	slog.Info("Pulling service", "name", s.Config.Name)
 
-	err := PullRepo(filepath.Join("services", s.Config.Name))
+	err := PullRepo(s.Path)
 	if err != nil {
 		return err
 	}
@@ -96,10 +99,8 @@ func (s *Service) Pull() error {
 func (s *Service) Init() error {
 	slog.Info("Initializing service", "name", s.Config.Name)
 
-	root := filepath.Join("services", s.Config.Name)
-
-	if _, err := os.Stat(root); os.IsNotExist(err) {
-		err := os.MkdirAll(root, 0755)
+	if _, err := os.Stat(s.Path); os.IsNotExist(err) {
+		err := os.MkdirAll(s.Path, 0755)
 		if err != nil {
 			return err
 		}
@@ -139,7 +140,7 @@ func (s *Service) Build() error {
 	slog.Info("Building service", "name", s.Config.Name)
 
 	cmd := exec.Command("sh", "-c", s.Config.Build)
-	cmd.Dir = filepath.Join("services", s.Config.Name)
+	cmd.Dir = s.Path
 
 	err := cmd.Run()
 	if err != nil {
@@ -181,7 +182,7 @@ func (s *Service) Start() error {
 	slog.Info("Starting service", "name", s.Config.Name)
 
 	cmd := exec.Command("sh", "-c", s.Config.Exec)
-	cmd.Dir = filepath.Join("services", s.Config.Name)
+	cmd.Dir = s.Path
 
 	err := cmd.Start()
 	if err != nil {
@@ -224,11 +225,12 @@ func main() {
 		slog.Error("Could not load config", "path", *configPath, "err", err)
 		os.Exit(1)
 	}
+	fmt.Println(config.ServicesPath)
 
 	services := []*Service{}
 
 	for _, service := range config.Services {
-		s := Service{Config: service}
+		s := Service{Config: service, Path: filepath.Join(config.ServicesPath, service.Name)}
 		err := s.Init()
 		if err != nil {
 			slog.Error("Could not initialize service", "name", s.Config.Name, "err", err)
