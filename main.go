@@ -16,12 +16,6 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// Hotify is a service management tool for a single server.
-// Features:
-// - Reverse proxy management, using caddy
-// - Service management
-// - Webhook support
-
 type Config struct {
 	Services     []ServiceConfig
 	Address      string
@@ -249,7 +243,6 @@ func main() {
 		slog.Error("Could not load config", "path", *configPath, "err", err)
 		os.Exit(1)
 	}
-	fmt.Println(config.ServicesPath)
 
 	services := []*Service{}
 
