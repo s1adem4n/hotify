@@ -269,9 +269,9 @@ func main() {
 	<-signals
 
 	for _, s := range services {
-		err := s.Process.Kill()
+		err := s.Stop()
 		if err != nil {
-			slog.Error("Could not kill service", "name", s.Config.Name, "err", err)
+			slog.Error("Could not stop service", "name", s.Config.Name, "err", err)
 		}
 	}
 
