@@ -1,6 +1,6 @@
 # Hotify
+*Minimalistic Coolify alternative / remake*
 
-Minimalistic Coolify alternative / remake
 Features:
   - Automatically build and start your services/apps
   - Restart on failure
