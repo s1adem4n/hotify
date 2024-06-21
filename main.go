@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
+	"crypto/sha1"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -258,8 +258,8 @@ func main() {
 
 	for _, service := range config.Services {
 		s := Service{Config: service, Path: filepath.Join(config.ServicesPath, service.Name)}
-		s.SecretHash = string(sha256.New().Sum([]byte(service.Secret)))
-
+		// Generate secret hash (sha1)
+		s.SecretHash = "sha1=" + fmt.Sprintf("%x", sha1.Sum([]byte(service.Secret)))
 		err := s.Init()
 		if err != nil {
 			slog.Error("Could not initialize service", "name", s.Config.Name, "err", err)
