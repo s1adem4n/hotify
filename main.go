@@ -307,6 +307,7 @@ func main() {
 					}
 				}
 
+				slog.Info("Received webhook", "service", s.Config.Name)
 				go s.Update()
 
 				w.WriteHeader(200)
