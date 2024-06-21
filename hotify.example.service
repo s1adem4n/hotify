@@ -1,0 +1,11 @@
+[Unit]
+Description=Hotify Service
+After=network.target
+
+[Service]
+ExecStart=hotify
+Restart=always
+WorkingDirectory=/path/to/hotify
+
+[Install]
+WantedBy=multi-user.target
