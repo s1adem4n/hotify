@@ -156,16 +156,17 @@ func (s *Service) Stop() error {
 
 	// if process is running
 	if s.Process != nil {
-		waiting := true
+		waiting := make(chan bool)
 
 		go func() {
-			s.Process.Signal(os.Interrupt)
+			s.Process.Signal(syscall.SIGTERM)
 			s.Process.Wait()
-			waiting = false
+			close(waiting)
 		}()
 
-		time.Sleep(5 * time.Second)
-		if waiting {
+		select {
+		case <-waiting:
+		case <-time.After(5 * time.Second):
 			slog.Info("Process did not exit after 5 seconds, killing", "name", s.Config.Name)
 			s.Process.Kill()
 		}
