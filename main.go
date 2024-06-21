@@ -139,7 +139,7 @@ func (s *Service) Update() error {
 func (s *Service) Build() error {
 	slog.Info("Building service", "name", s.Config.Name)
 
-	cmd := exec.Command("sh", "-c", s.Config.Build)
+	cmd := exec.Command("bash", "-c", s.Config.Build)
 	cmd.Dir = s.Path
 
 	err := cmd.Run()
@@ -181,7 +181,7 @@ func (s *Service) Stop() error {
 func (s *Service) Start() error {
 	slog.Info("Starting service", "name", s.Config.Name)
 
-	cmd := exec.Command("sh", "-c", s.Config.Exec)
+	cmd := exec.Command("bash", "-c", s.Config.Exec)
 	cmd.Dir = s.Path
 
 	err := cmd.Start()
