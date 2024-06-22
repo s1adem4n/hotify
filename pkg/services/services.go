@@ -193,7 +193,6 @@ type LogWriter struct {
 
 func (w *LogWriter) Write(p []byte) (n int, err error) {
 	s := string(p)
-	slog.Info(s)
 	w.Service.Logs = append(w.Service.Logs, s)
 	return len(p), nil
 }
