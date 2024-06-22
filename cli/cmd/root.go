@@ -38,7 +38,6 @@ func init() {
 	Client = api.NewClient(config.Address, config.Secret)
 
 	rootCmd.PersistentFlags().StringP("config", "c", path, "Path to the config file")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	if config.Address == "" || config.Secret == "" {
 		PrintlnBold("You must configure the CLI before using it.\n")
