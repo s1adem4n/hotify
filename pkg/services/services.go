@@ -1,7 +1,6 @@
 package services
 
 import (
-	"bytes"
 	"fmt"
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
@@ -124,17 +123,14 @@ func (s *Service) Update() error {
 	if err != nil {
 		return err
 	}
-
 	err = s.Pull()
 	if err != nil {
 		return err
 	}
-
 	err = s.Build()
 	if err != nil {
 		return err
 	}
-
 	err = s.Start()
 	return err
 }
@@ -145,13 +141,14 @@ func (s *Service) Build() error {
 	cmd := exec.Command("bash", "-c", s.Config.Build)
 	cmd.Dir = s.Path
 
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	var writer LogWriter
+	writer.Service = s
+	cmd.Stdout = &writer
+	cmd.Stderr = &writer
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("build failed: %s, err: %v", buf.String(), err)
+		return fmt.Errorf("build failed: %s, err: %v", writer.Service.Logs, err)
 	}
 
 	return nil
