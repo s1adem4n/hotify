@@ -12,6 +12,10 @@ import (
 	"net/http"
 )
 
+func ResponseOK(resp *http.Response) bool {
+	return resp.StatusCode >= 200 && resp.StatusCode < 300
+}
+
 type Client struct {
 	Address string
 	Secret  string
@@ -64,6 +68,9 @@ func (c *Client) Services() ([]services.Service, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	var services []services.Service
 	err = json.NewDecoder(resp.Body).Decode(&services)
@@ -80,6 +87,9 @@ func (c *Client) Service(name string) (*services.Service, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	var service services.Service
 	err = json.NewDecoder(resp.Body).Decode(&service)
@@ -96,6 +106,9 @@ func (c *Client) StartService(name string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }
@@ -106,6 +119,9 @@ func (c *Client) StopService(name string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }
@@ -116,6 +132,9 @@ func (c *Client) UpdateService(name string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }
@@ -131,6 +150,9 @@ func (c *Client) CreateService(config *config.ServiceConfig) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }
@@ -146,6 +168,9 @@ func (c *Client) DeleteService(name string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }
@@ -156,6 +181,9 @@ func (c *Client) RestartService(name string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if !ResponseOK(resp) {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	return nil
 }

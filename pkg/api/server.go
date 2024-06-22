@@ -119,6 +119,7 @@ func (s *Server) CreateService(w http.ResponseWriter, r *http.Request) {
 
 	err = s.Manager.Create(&serviceConfig)
 	if err != nil {
+		slog.Error("Failed to create service", "error", err)
 		RespondJSON(w, http.StatusInternalServerError, nil)
 		return
 	}
@@ -133,7 +134,12 @@ func (s *Server) StartService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go service.Start()
+	err := service.Start()
+	if err != nil {
+		slog.Error("Failed to start service", "error", err)
+		RespondJSON(w, http.StatusInternalServerError, nil)
+		return
+	}
 
 	RespondJSON(w, http.StatusOK, nil)
 }
@@ -145,7 +151,12 @@ func (s *Server) StopService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go service.Stop()
+	err := service.Stop()
+	if err != nil {
+		slog.Error("Failed to stop service", "error", err)
+		RespondJSON(w, http.StatusInternalServerError, nil)
+		return
+	}
 
 	RespondJSON(w, http.StatusOK, nil)
 }
@@ -157,7 +168,12 @@ func (s *Server) UpdateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go service.Update()
+	err := service.Update()
+	if err != nil {
+		slog.Error("Failed to update service", "error", err)
+		RespondJSON(w, http.StatusInternalServerError, nil)
+		return
+	}
 
 	RespondJSON(w, http.StatusOK, nil)
 }
@@ -171,6 +187,7 @@ func (s *Server) DeleteService(w http.ResponseWriter, r *http.Request) {
 
 	err := s.Manager.Delete(r.PathValue("service"))
 	if err != nil {
+		slog.Error("Failed to delete service", "error", err)
 		RespondJSON(w, http.StatusInternalServerError, nil)
 		return
 	}
@@ -185,7 +202,12 @@ func (s *Server) RestartService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go service.Restart()
+	err := service.Restart()
+	if err != nil {
+		slog.Error("Failed to restart service", "error", err)
+		RespondJSON(w, http.StatusInternalServerError, nil)
+		return
+	}
 
 	RespondJSON(w, http.StatusOK, nil)
 }
@@ -215,7 +237,12 @@ func (s *Server) ServiceWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("Received webhook", "service", service.Config.Name)
-	go service.Update()
+	err := service.Update()
+	if err != nil {
+		slog.Error("Failed to update service", "error", err)
+		w.WriteHeader(500)
+		return
+	}
 
 	w.WriteHeader(200)
 }
