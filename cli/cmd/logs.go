@@ -49,5 +49,5 @@ var logsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(logsCmd)
-	logsCmd.Flags().BoolP("live", "l", false, "stream logs")
+	logsCmd.Flags().BoolP("live", "l", false, "update logs in real-time")
 }
