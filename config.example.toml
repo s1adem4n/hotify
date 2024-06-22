@@ -1,15 +1,17 @@
-address = ":1234"
-servicesPath = "services"
-secret = "verysecretapisecret"
+LoadPath = 'config.toml'
+Address = 'localhost:1234'
+ServicesPath = 'services'
+Secret = 'secret'
 
-[[services]]
-name = "htest"
-repo = "https://github.com/s1adem4n/htest.git"
-exec = "build/htest"
-build = "go mod vendor && go build -o build/htest"
-restart = true
-maxRestarts = 5
-secret = "verysecretgithubwebhooksecret"
-[services.proxy]
-match = "192.168.1.100"
-upstream = "localhost:8080"
+[[Services]]
+Name = 'htest'
+Repo = 'https://github.com/s1adem4n/htest.git'
+Exec = 'build/htest'
+Build = 'go mod vendor && go build -o build/htest'
+Restart = false
+MaxRestarts = 0
+Secret = 'verysecretgithubwebhooksecret'
+
+[Services.Proxy]
+Match = '192.168.1.100'
+Upstream = 'localhost:8080'
