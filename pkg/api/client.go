@@ -134,3 +134,28 @@ func (c *Client) CreateService(config *config.ServiceConfig) error {
 
 	return nil
 }
+
+func (c *Client) DeleteService(name string) error {
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/services/%s", c.Address, name), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (c *Client) RestartService(name string) error {
+	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s/restart", c.Address, name))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
 	"path/filepath"
@@ -113,6 +114,40 @@ func (m *Manager) Create(config *config.ServiceConfig) error {
 	m.mu.Lock()
 	m.services = append(m.services, service)
 	m.mu.Unlock()
+
+	return nil
+}
+
+func (m *Manager) Delete(name string) error {
+	service := m.Service(name)
+	if service == nil {
+		return errors.New("service not found")
+	}
+
+	err := service.Remove()
+	if err != nil {
+		return err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for i, s := range m.services {
+		if s.Config.Name == name {
+			m.services = append(m.services[:i], m.services[i+1:]...)
+			break
+		}
+	}
+
+	m.Config.Services = []config.ServiceConfig{}
+	for _, s := range m.services {
+		m.Config.Services = append(m.Config.Services, *s.Config)
+	}
+
+	err = m.Config.Save(m.Config.LoadPath)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

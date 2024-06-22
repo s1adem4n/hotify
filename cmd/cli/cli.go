@@ -7,11 +7,14 @@ package main
 // services update <name>: update service
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"hotify/pkg/api"
+	"hotify/pkg/config"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 )
@@ -26,9 +29,13 @@ var configPath = flag.String("config", "", "Path to the config file")
 type Table [][]string
 
 func (t Table) Print() {
-	for _, row := range t {
+	for i, row := range t {
 		for _, cell := range row {
-			fmt.Printf("%-20s", cell)
+			if i == 0 {
+				fmt.Printf("\033[1m%-20s\033[0m", cell)
+			} else {
+				fmt.Printf("%-20s", cell)
+			}
 		}
 		fmt.Println()
 	}
@@ -37,6 +44,23 @@ func (t Table) Print() {
 var statusMap = map[int]string{
 	0: "running",
 	1: "stopped",
+}
+
+func PrintlnBold(text string) {
+	fmt.Printf("\033[1m%s\033[0m\n", text)
+}
+
+func InputPrompt(prompt string, dest *string) {
+	PrintlnBold(prompt)
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	*dest = strings.TrimSpace(s)
 }
 
 func main() {
@@ -51,7 +75,7 @@ func main() {
 
 		path := filepath.Join(configDir, "hotify", "config.toml")
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			var config Config
+			var conf Config
 
 			os.MkdirAll(filepath.Dir(path), 0755)
 
@@ -62,12 +86,10 @@ func main() {
 			}
 			defer file.Close()
 
-			fmt.Println("Server address: ")
-			fmt.Scanln(&config.Address)
-			fmt.Println("Server secret: ")
-			fmt.Scanln(&config.Secret)
+			InputPrompt("Address", &conf.Address)
+			InputPrompt("Secret", &conf.Secret)
 
-			err = toml.NewEncoder(file).Encode(config)
+			err = toml.NewEncoder(file).Encode(conf)
 			if err != nil {
 				fmt.Println("Could not encode config file", err)
 				os.Exit(1)
@@ -77,20 +99,20 @@ func main() {
 		*configPath = path
 	}
 
-	var config Config
+	var conf Config
 	file, err := os.Open(*configPath)
 	if err != nil {
 		fmt.Println("Could not open config file", err)
 		os.Exit(1)
 	}
 	defer file.Close()
-	err = toml.NewDecoder(file).Decode(&config)
+	err = toml.NewDecoder(file).Decode(&conf)
 	if err != nil {
 		fmt.Println("Could not decode config file", err)
 		os.Exit(1)
 	}
 
-	client := api.NewClient(config.Address, config.Secret)
+	client := api.NewClient("http://localhost:1234", "secret")
 
 	// handle services command
 	if len(os.Args) <= 1 {
@@ -158,6 +180,55 @@ func main() {
 		for _, log := range service.Logs {
 			fmt.Print(log)
 		}
+		os.Exit(0)
+	case "create":
+		var config config.ServiceConfig
+		// prevent the shell from trying to interpret the input as a command
+		fmt.Print("\033[1m")
+		defer fmt.Print("\033[0m")
+
+		InputPrompt("Name", &config.Name)
+		InputPrompt("Repo", &config.Repo)
+		InputPrompt("Build command", &config.Build)
+		InputPrompt("Exec command", &config.Exec)
+
+		var proxy string
+		InputPrompt("Proxy (y/n)", &proxy)
+		if proxy == "y" {
+			InputPrompt("Proxy match", &config.Proxy.Match)
+			InputPrompt("Proxy upstream", &config.Proxy.Upstream)
+		}
+
+		err := client.CreateService(&config)
+		if err != nil {
+			fmt.Println("Could not create service", err)
+			os.Exit(1)
+		}
+		fmt.Println("Service created")
+		os.Exit(0)
+	case "delete":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: hotify delete <name>")
+			os.Exit(1)
+		}
+		err := client.DeleteService(os.Args[2])
+		if err != nil {
+			fmt.Println("Could not delete service", err)
+			os.Exit(1)
+		}
+		fmt.Println("Service deleted")
+		os.Exit(0)
+	case "restart":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: hotify restart <name>")
+			os.Exit(1)
+		}
+		err := client.RestartService(os.Args[2])
+		if err != nil {
+			fmt.Println("Could not restart service", err)
+			os.Exit(1)
+		}
+		fmt.Println("Service restarted")
 		os.Exit(0)
 	default:
 		fmt.Println("Usage: hotify <command> [args]")

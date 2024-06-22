@@ -41,12 +41,15 @@ func NewServer(config *config.Config, manager *services.Manager) *Server {
 		mux:     http.NewServeMux(),
 	}
 
-	s.mux.HandleFunc("/api/services", s.GetServices)
+	s.mux.HandleFunc("GET /api/services", s.GetServices)
+	s.mux.HandleFunc("POST /api/services", s.CreateService)
 
-	s.mux.HandleFunc("/api/services/{service}", s.GetService)
-	s.mux.HandleFunc("/api/services/{service}/start", s.StartService)
-	s.mux.HandleFunc("/api/services/{service}/stop", s.StopService)
-	s.mux.HandleFunc("/api/services/{service}/update", s.UpdateService)
+	s.mux.HandleFunc("GET /api/services/{service}", s.GetService)
+	s.mux.HandleFunc("DELETE /api/services/{service}", s.DeleteService)
+	s.mux.HandleFunc("GET /api/services/{service}/start", s.StartService)
+	s.mux.HandleFunc("GET /api/services/{service}/stop", s.StopService)
+	s.mux.HandleFunc("GET /api/services/{service}/update", s.UpdateService)
+	s.mux.HandleFunc("GET /api/services/{service}/restart", s.RestartService)
 
 	s.mux.HandleFunc("/hooks/{service}", s.ServiceWebhook)
 
@@ -57,6 +60,7 @@ func (s *Server) Start() error {
 	slog.Info("Starting API server", "address", s.Config.Address)
 	err := http.ListenAndServe(s.Config.Address, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		slog.Info("Request", "method", r.Method, "path", r.URL.Path)
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusNoContent)
@@ -108,6 +112,11 @@ func (s *Server) CreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.Manager.Service(serviceConfig.Name) != nil {
+		RespondJSON(w, http.StatusConflict, nil)
+		return
+	}
+
 	err = s.Manager.Create(&serviceConfig)
 	if err != nil {
 		RespondJSON(w, http.StatusInternalServerError, nil)
@@ -149,6 +158,34 @@ func (s *Server) UpdateService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go service.Update()
+
+	RespondJSON(w, http.StatusOK, nil)
+}
+
+func (s *Server) DeleteService(w http.ResponseWriter, r *http.Request) {
+	service := s.Manager.Service(r.PathValue("service"))
+	if service == nil {
+		RespondJSON(w, http.StatusNotFound, nil)
+		return
+	}
+
+	err := s.Manager.Delete(r.PathValue("service"))
+	if err != nil {
+		RespondJSON(w, http.StatusInternalServerError, nil)
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, nil)
+}
+
+func (s *Server) RestartService(w http.ResponseWriter, r *http.Request) {
+	service := s.Manager.Service(r.PathValue("service"))
+	if service == nil {
+		RespondJSON(w, http.StatusNotFound, nil)
+		return
+	}
+
+	go service.Restart()
 
 	RespondJSON(w, http.StatusOK, nil)
 }

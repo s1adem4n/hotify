@@ -249,3 +249,27 @@ func (s *Service) Start() error {
 
 	return nil
 }
+
+func (s *Service) Remove() error {
+	slog.Info("Removing service", "name", s.Config.Name)
+
+	err := s.Stop()
+	if err != nil {
+		return err
+	}
+
+	err = os.RemoveAll(s.Path)
+	return err
+}
+
+func (s *Service) Restart() error {
+	slog.Info("Restarting service", "name", s.Config.Name)
+
+	err := s.Stop()
+	if err != nil {
+		return err
+	}
+
+	err = s.Start()
+	return err
+}
