@@ -65,11 +65,12 @@ func (s *Service) Pull() error {
 }
 
 func (s *Service) AddProxy() error {
-	slog.Info("Adding service proxy", "name", s.Config.Name)
-
 	if s.Config.Proxy.Match == "" {
 		return nil
 	}
+
+	slog.Info("Adding service proxy", "name", s.Config.Name)
+
 	if s.Caddy.ObjectExists(fmt.Sprintf("id/%s", caddy.GenerateID(s.Config.Proxy.Match))) {
 		return nil
 	}
@@ -85,11 +86,12 @@ func (s *Service) AddProxy() error {
 }
 
 func (s *Service) RemoveProxy() error {
-	slog.Info("Removing service proxy", "name", s.Config.Name)
-
 	if s.Config.Proxy.Match == "" {
 		return nil
 	}
+
+	slog.Info("Removing service proxy", "name", s.Config.Name)
+
 	path := fmt.Sprintf("id/%s", caddy.GenerateID(s.Config.Proxy.Match))
 	if !s.Caddy.ObjectExists(path) {
 		return nil
