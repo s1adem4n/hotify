@@ -48,6 +48,7 @@ func NewServer(config *config.Config, manager *services.Manager) *Server {
 
 	s.mux.HandleFunc("GET /api/services/{service}", s.GetService)
 	s.mux.HandleFunc("DELETE /api/services/{service}", s.DeleteService)
+
 	s.mux.HandleFunc("GET /api/services/{service}/start", s.StartService)
 	s.mux.HandleFunc("GET /api/services/{service}/stop", s.StopService)
 	s.mux.HandleFunc("GET /api/services/{service}/update", s.UpdateService)
@@ -62,6 +63,9 @@ func (s *Server) Start() error {
 	slog.Info("Starting API server", "address", s.Config.Address)
 	err := http.ListenAndServe(s.Config.Address, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Signature-256")
+
 		slog.Info("Request", "method", r.Method, "path", r.URL.Path)
 
 		if r.Method == "OPTIONS" {
