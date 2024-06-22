@@ -113,7 +113,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := api.NewClient("http://localhost:1234", "secret")
+	client := api.NewClient(conf.Address, conf.Secret)
 
 	// handle services command
 	if len(os.Args) <= 1 {
