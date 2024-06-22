@@ -62,6 +62,13 @@ type Client struct {
 	Server     Server
 }
 
+func NewClient(serverName string, address string) *Client {
+	return &Client{
+		ServerName: serverName,
+		Address:    address,
+	}
+}
+
 var BaseConfig = `{
 	"apps": {
 		"http": {

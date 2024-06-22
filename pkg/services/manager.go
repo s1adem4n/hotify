@@ -14,6 +14,13 @@ type Manager struct {
 	mu       sync.Mutex
 }
 
+func NewManager(config *config.Config, caddy *caddy.Client) *Manager {
+	return &Manager{
+		Config: config,
+		Caddy:  caddy,
+	}
+}
+
 func (m *Manager) InitService(service *Service) error {
 	err := service.Init()
 	if err != nil {
@@ -33,12 +40,11 @@ func (m *Manager) InitService(service *Service) error {
 
 func (m *Manager) Init() error {
 	for _, serviceConfig := range m.Config.Services {
-		service := &Service{
-			Config: &serviceConfig,
-			Path:   filepath.Join(m.Config.ServicesPath, serviceConfig.Name),
-			Caddy:  m.Caddy,
-		}
-
+		service := NewService(
+			&serviceConfig,
+			filepath.Join(m.Config.ServicesPath, serviceConfig.Name),
+			m.Caddy,
+		)
 		err := m.InitService(service)
 		if err != nil {
 			return err
@@ -93,10 +99,11 @@ func (m *Manager) Create(config *config.ServiceConfig) error {
 		return err
 	}
 
-	service := &Service{
-		Config: config,
-		Path:   filepath.Join(m.Config.ServicesPath, config.Name),
-	}
+	service := NewService(
+		config,
+		filepath.Join(m.Config.ServicesPath, config.Name),
+		m.Caddy,
+	)
 
 	err = m.InitService(service)
 	if err != nil {

@@ -23,20 +23,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	caddyClient := caddy.Client{
-		Address:    "http://localhost:2019",
-		ServerName: "srv0",
-	}
+	caddyClient := caddy.NewClient(
+		"srv0",
+		"http://localhost:2019",
+	)
 
 	err = caddyClient.Init()
 	if err != nil {
 		slog.Error("Could not initialize Caddy client", "err", err)
 	}
 
-	manager := s.Manager{
-		Config: &config,
-		Caddy:  &caddyClient,
-	}
+	manager := s.NewManager(&config, caddyClient)
 
 	err = manager.Init()
 	if err != nil {
@@ -44,7 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	server := api.NewServer(&config, &manager)
+	server := api.NewServer(&config, manager)
 
 	go func() {
 		err := server.Start()

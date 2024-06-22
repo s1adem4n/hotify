@@ -27,6 +27,20 @@ type Service struct {
 	Process  *os.Process           `json:"-"`
 	Status   ServiceStatus         `json:"status"`
 	Restarts int                   `json:"restarts"`
+	Logs     []string              `json:"logs"`
+}
+
+func NewService(
+	config *config.ServiceConfig,
+	path string,
+	caddy *caddy.Client,
+) *Service {
+	return &Service{
+		Config: config,
+		Caddy:  caddy,
+		Path:   path,
+		Logs:   []string{},
+	}
 }
 
 func (s *Service) Clone() error {
@@ -177,6 +191,17 @@ func (s *Service) Stop() error {
 	return nil
 }
 
+type LogWriter struct {
+	Service *Service
+}
+
+func (w *LogWriter) Write(p []byte) (n int, err error) {
+	s := string(p)
+	slog.Info(s)
+	w.Service.Logs = append(w.Service.Logs, s)
+	return len(p), nil
+}
+
 func (s *Service) Start() error {
 	slog.Info("Starting service", "name", s.Config.Name)
 
@@ -190,13 +215,14 @@ func (s *Service) Start() error {
 	cmd := exec.Command("bash", "-c", s.Config.Exec)
 	cmd.Dir = s.Path
 
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	var writer LogWriter
+	writer.Service = s
+	cmd.Stdout = &writer
+	cmd.Stderr = &writer
 
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("start failed: %s, err: %v", buf.String(), err)
+		return fmt.Errorf("start failed: %s, err: %v", writer.Service.Logs, err)
 	}
 
 	s.Process = cmd.Process

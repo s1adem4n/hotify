@@ -109,6 +109,20 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println("Service updated")
+	case "logs":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: hotify logs <name>")
+			os.Exit(1)
+		}
+		service, err := client.Service(os.Args[2])
+		if err != nil {
+			fmt.Println("Could not get service", err)
+			os.Exit(1)
+		}
+		for _, log := range service.Logs {
+			fmt.Print(log)
+		}
+		os.Exit(0)
 	default:
 		fmt.Println("Usage: hotify <command> [args]")
 		os.Exit(1)
