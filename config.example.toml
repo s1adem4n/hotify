@@ -1,5 +1,6 @@
 address = ":1234"
 servicesPath = "services"
+secret = "verysecretapisecret"
 
 [[services]]
 name = "htest"
