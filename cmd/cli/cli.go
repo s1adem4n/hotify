@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"hotify/pkg/api"
 	"os"
+	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
 )
@@ -20,7 +21,7 @@ type Config struct {
 	Secret  string
 }
 
-var configPath = flag.String("config", "config.toml", "Path to the config file")
+var configPath = flag.String("config", "", "Path to the config file")
 
 type Table [][]string
 
@@ -41,6 +42,41 @@ var statusMap = map[int]string{
 func main() {
 	flag.Parse()
 
+	if *configPath == "" {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			fmt.Println("Could not get user config dir", err)
+			os.Exit(1)
+		}
+
+		path := filepath.Join(configDir, "hotify", "config.toml")
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			var config Config
+
+			os.MkdirAll(filepath.Dir(path), 0755)
+
+			file, err := os.Create(path)
+			if err != nil {
+				fmt.Println("Could not create config file", err)
+				os.Exit(1)
+			}
+			defer file.Close()
+
+			fmt.Println("Server address: ")
+			fmt.Scanln(&config.Address)
+			fmt.Println("Server secret: ")
+			fmt.Scanln(&config.Secret)
+
+			err = toml.NewEncoder(file).Encode(config)
+			if err != nil {
+				fmt.Println("Could not encode config file", err)
+				os.Exit(1)
+			}
+		}
+
+		*configPath = path
+	}
+
 	var config Config
 	file, err := os.Open(*configPath)
 	if err != nil {
@@ -54,10 +90,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := api.NewClient("http://localhost:1234", config.Secret)
+	client := api.NewClient(config.Address, config.Secret)
 
 	// handle services command
-	if len(os.Args) == 0 {
+	if len(os.Args) <= 1 {
 		fmt.Println("Usage: hotify <command> [args]")
 		os.Exit(1)
 	}
