@@ -34,15 +34,15 @@ type ServiceConfig struct {
 
 type Config struct {
 	// Path to the config file if loaded
-	LoadPath string
+	LoadPath string `json:"-"`
 	// Services to manage
-	Services []ServiceConfig
+	Services []ServiceConfig `json:"services"`
 	// Address to listen on for webhooks 7 API
-	Address string
+	Address string `json:"address"`
 	// Path to the services folder, where the services are cloned and built
-	ServicesPath string
+	ServicesPath string `json:"servicesPath"`
 	// Secret to verify API requests
-	Secret string
+	Secret string `json:"secret"`
 }
 
 func (c *Config) Load(path string) error {

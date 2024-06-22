@@ -41,6 +41,8 @@ func NewServer(config *config.Config, manager *services.Manager) *Server {
 		mux:     http.NewServeMux(),
 	}
 
+	s.mux.HandleFunc("GET /api/config", s.GetConfig)
+
 	s.mux.HandleFunc("GET /api/services", s.GetServices)
 	s.mux.HandleFunc("POST /api/services", s.CreateService)
 
@@ -87,6 +89,11 @@ func (s *Server) Start() error {
 
 	return err
 }
+
+func (s *Server) GetConfig(w http.ResponseWriter, r *http.Request) {
+	RespondJSON(w, http.StatusOK, s.Config)
+}
+
 func (s *Server) GetServices(w http.ResponseWriter, r *http.Request) {
 	services := s.Manager.Services()
 

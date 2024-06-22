@@ -62,15 +62,50 @@ func NewClient(address, secret string) *Client {
 	}
 }
 
-func (c *Client) Services() ([]services.Service, error) {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services", c.Address))
+func (c *Client) Fetch(method string, path string) (*http.Response, error) {
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", c.Address, path), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if !ResponseOK(resp) {
+		var body []byte
+		if resp.Body != nil {
+			defer resp.Body.Close()
+			body, _ = io.ReadAll(resp.Body)
+		}
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
+	}
+
+	return resp, nil
+}
+
+func (c *Client) GetConfig() (*config.Config, error) {
+	resp, err := c.Fetch(http.MethodGet, "api/config")
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+
+	var config config.Config
+	err = json.NewDecoder(resp.Body).Decode(&config)
+	if err != nil {
+		return nil, err
 	}
+
+	return &config, nil
+}
+
+func (c *Client) Services() ([]services.Service, error) {
+	resp, err := c.Fetch(http.MethodGet, "api/services")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
 	var services []services.Service
 	err = json.NewDecoder(resp.Body).Decode(&services)
@@ -82,14 +117,11 @@ func (c *Client) Services() ([]services.Service, error) {
 }
 
 func (c *Client) Service(name string) (*services.Service, error) {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("api/services/%s", name))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	var service services.Service
 	err = json.NewDecoder(resp.Body).Decode(&service)
@@ -101,40 +133,31 @@ func (c *Client) Service(name string) (*services.Service, error) {
 }
 
 func (c *Client) StartService(name string) error {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s/start", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/start", c.Address, name))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	return nil
 }
 
 func (c *Client) StopService(name string) error {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s/stop", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/stop", c.Address, name))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	return nil
 }
 
 func (c *Client) UpdateService(name string) error {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s/update", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/update", c.Address, name))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	return nil
 }
@@ -158,32 +181,21 @@ func (c *Client) CreateService(config *config.ServiceConfig) error {
 }
 
 func (c *Client) DeleteService(name string) error {
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/services/%s", c.Address, name), nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := c.client.Do(req)
+	resp, err := c.Fetch(http.MethodDelete, fmt.Sprintf("%s/api/services/%s", c.Address, name))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	return nil
 }
 
 func (c *Client) RestartService(name string) error {
-	resp, err := c.client.Get(fmt.Sprintf("%s/api/services/%s/restart", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/restart", c.Address, name))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if !ResponseOK(resp) {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
 
 	return nil
 }
