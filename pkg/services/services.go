@@ -110,12 +110,11 @@ func (s *Service) Init() error {
 		}
 
 		err = s.Clone()
-		if err != nil {
-			return err
-		}
+		return err
 	}
 
-	return nil
+	err := s.Pull()
+	return err
 }
 
 func (s *Service) Update() error {
