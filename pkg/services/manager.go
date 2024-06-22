@@ -40,7 +40,12 @@ func (m *Manager) InitService(service *Service) error {
 }
 
 func (m *Manager) Init() error {
+	services := make(map[string]bool)
 	for _, serviceConfig := range m.Config.Services {
+		if services[serviceConfig.Name] {
+			return errors.New("duplicate service name")
+		}
+
 		service := NewService(
 			&serviceConfig,
 			filepath.Join(m.Config.ServicesPath, serviceConfig.Name),
@@ -54,6 +59,7 @@ func (m *Manager) Init() error {
 		m.mu.Lock()
 		m.services = append(m.services, service)
 		m.mu.Unlock()
+		services[serviceConfig.Name] = true
 	}
 
 	return nil
