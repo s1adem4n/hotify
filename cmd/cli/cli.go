@@ -14,6 +14,7 @@ import (
 	"hotify/pkg/config"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
@@ -191,6 +192,18 @@ func main() {
 		InputPrompt("Repo", &config.Repo)
 		InputPrompt("Build command", &config.Build)
 		InputPrompt("Exec command", &config.Exec)
+		InputPrompt("Webhook secret", &config.Secret)
+
+		var restart string
+		InputPrompt("Restart on failure (y/n)", &restart)
+		if restart == "y" {
+			config.Restart = true
+
+			var maxRestarts string
+			InputPrompt("Max restarts", &maxRestarts)
+			maxRestartsInt, _ := strconv.Atoi(maxRestarts)
+			config.MaxRestarts = maxRestartsInt
+		}
 
 		var proxy string
 		InputPrompt("Proxy (y/n)", &proxy)
