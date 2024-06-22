@@ -30,7 +30,7 @@ type Route struct {
 	Match  []Match  `json:"match"`
 }
 
-func NewProxy(id string, upstream string, match string) Route {
+func NewProxy(id string, match string, upstream string) Route {
 	return Route{
 		ID: id,
 		Handle: []Handle{
@@ -56,7 +56,7 @@ type Server struct {
 	Routes []Route  `json:"routes"`
 }
 
-type CaddyClient struct {
+type Client struct {
 	ServerName string
 	Address    string
 	Server     Server
@@ -70,7 +70,7 @@ var BaseConfig = `{
 	}
 }`
 
-func (c *CaddyClient) LoadBaseConfig() error {
+func (c *Client) LoadBaseConfig() error {
 	resp, err := http.Get(fmt.Sprintf("%s/config/apps/http/servers", c.Address))
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (c *CaddyClient) LoadBaseConfig() error {
 	return nil
 }
 
-func (c *CaddyClient) LoadServer() error {
+func (c *Client) LoadServer() error {
 	path := fmt.Sprintf("config/apps/http/servers/%s", c.ServerName)
 
 	resp, err := http.Get(fmt.Sprintf("%s/%s", c.Address, path))
@@ -120,7 +120,7 @@ func (c *CaddyClient) LoadServer() error {
 	return nil
 }
 
-func (c *CaddyClient) Init() error {
+func (c *Client) Init() error {
 	err := c.LoadBaseConfig()
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (c *CaddyClient) Init() error {
 	return nil
 }
 
-func (c *CaddyClient) ObjectExists(path string) bool {
+func (c *Client) ObjectExists(path string) bool {
 	resp, err := http.Get(fmt.Sprintf("%s/%s", c.Address, path))
 	if err != nil {
 		return false
@@ -145,7 +145,7 @@ func (c *CaddyClient) ObjectExists(path string) bool {
 	return string(body) != "null\n" && resp.StatusCode == http.StatusOK
 }
 
-func (c *CaddyClient) DeleteObject(path string) error {
+func (c *Client) DeleteObject(path string) error {
 	req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", c.Address, path), nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -156,7 +156,7 @@ func (c *CaddyClient) DeleteObject(path string) error {
 	return nil
 }
 
-func (c *CaddyClient) SetObject(method string, path string, object any) error {
+func (c *Client) SetObject(method string, path string, object any) error {
 	marshaled, err := json.Marshal(object)
 	if err != nil {
 		return err
@@ -178,7 +178,7 @@ func (c *CaddyClient) SetObject(method string, path string, object any) error {
 	return nil
 }
 
-func (c *CaddyClient) AddRoute(route Route) error {
+func (c *Client) AddRoute(route Route) error {
 	if c.ObjectExists(fmt.Sprintf("id/%s", route.ID)) {
 		return errors.New("route already exists")
 	}
