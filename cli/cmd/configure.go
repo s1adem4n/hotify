@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hotify/cli/config"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,14 @@ var configureCmd = &cobra.Command{
 	Long:  `Enter your server address and API secret to use the hotify CLI.`,
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		configPath, _ := cmd.Flags().GetString("config")
+		var configPath string
+		if cmd != nil {
+			configPath, _ = cmd.Flags().GetString("config")
+		} else {
+			configDir, _ := os.UserConfigDir()
+			configPath = filepath.Join(configDir, "hotify", "config.toml")
+		}
+
 		if _, err := os.Stat(configPath); err == nil {
 			os.Remove(configPath)
 		}

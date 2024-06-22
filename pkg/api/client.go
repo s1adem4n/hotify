@@ -133,7 +133,7 @@ func (c *Client) Service(name string) (*services.Service, error) {
 }
 
 func (c *Client) StartService(name string) error {
-	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/start", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("api/services/%s/start", name))
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (c *Client) StartService(name string) error {
 }
 
 func (c *Client) StopService(name string) error {
-	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/stop", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("api/services/%s/stop", name))
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (c *Client) StopService(name string) error {
 }
 
 func (c *Client) UpdateService(name string) error {
-	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/update", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("api/services/%s/update", name))
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (c *Client) CreateService(config *config.ServiceConfig) error {
 }
 
 func (c *Client) DeleteService(name string) error {
-	resp, err := c.Fetch(http.MethodDelete, fmt.Sprintf("%s/api/services/%s", c.Address, name))
+	resp, err := c.Fetch(http.MethodDelete, fmt.Sprintf("api/services/%s", name))
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (c *Client) DeleteService(name string) error {
 }
 
 func (c *Client) RestartService(name string) error {
-	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("%s/api/services/%s/restart", c.Address, name))
+	resp, err := c.Fetch(http.MethodGet, fmt.Sprintf("api/services/%s/restart", name))
 	if err != nil {
 		return err
 	}
