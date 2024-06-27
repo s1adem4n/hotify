@@ -14,7 +14,7 @@ type ProxyConfig struct {
 }
 
 type ServiceConfig struct {
-	// Name of the service, used for logging and folder name
+	// Name of the service, used for logging and folder name, defaults to the key in the services map
 	Name string `json:"name"`
 	// Git repository URL
 	Repo string `json:"repo"`
@@ -36,7 +36,7 @@ type Config struct {
 	// Path to the config file if loaded
 	LoadPath string `json:"-"`
 	// Services to manage
-	Services []ServiceConfig `json:"services"`
+	Services map[string]ServiceConfig `json:"services"`
 	// Address to listen on for webhooks 7 API
 	Address string `json:"address"`
 	// Path to the services folder, where the services are cloned and built
@@ -54,6 +54,13 @@ func (c *Config) Load(path string) error {
 
 	err = toml.NewDecoder(file).Decode(c)
 	c.LoadPath = path
+
+	for key, service := range c.Services {
+		if service.Name == "" {
+			service.Name = key
+			c.Services[key] = service
+		}
+	}
 
 	return err
 }
