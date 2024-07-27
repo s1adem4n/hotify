@@ -6,11 +6,31 @@ import (
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
 	s "hotify/pkg/services"
+	"hotify/webui"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
+
+func SPAMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		err := next(c)
+		if err != nil {
+			if he, ok := err.(*echo.HTTPError); ok {
+				if he.Code == http.StatusNotFound {
+					c.Request().URL.Path = "/"
+					return next(c)
+				}
+			}
+		}
+		return err
+	}
+}
 
 func main() {
 	configPath := flag.String("config", "config.toml", "Path to the config file")
@@ -41,12 +61,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	server := api.NewServer(&config, manager)
+	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "X-Signature-256"},
+	}))
+	e.Pre(SPAMiddleware)
+
+	apiGroup := e.Group("/api")
+
+	api.NewServer(&config, manager, apiGroup)
+
+	frontend := echo.MustSubFS(webui.Assets, "build")
+	e.StaticFS("/", frontend)
 
 	go func() {
-		err := server.Start()
+		slog.Info("Starting server", "address", config.Address)
+		err := e.Start(config.Address)
 		if err != nil {
-			slog.Error("Could not start API server", "err", err)
+			slog.Error("Could not start server", "err", err)
 			os.Exit(1)
 		}
 	}()

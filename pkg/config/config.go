@@ -37,7 +37,7 @@ type Config struct {
 	LoadPath string `json:"-"`
 	// Services to manage
 	Services map[string]ServiceConfig `json:"services"`
-	// Address to listen on for webhooks 7 API
+	// Address for management API and interface
 	Address string `json:"address"`
 	// Path to the services folder, where the services are cloned and built
 	ServicesPath string `json:"servicesPath"`
