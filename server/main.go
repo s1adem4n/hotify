@@ -6,6 +6,7 @@ import (
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
 	s "hotify/pkg/services"
+	"hotify/pkg/update"
 	"hotify/webui"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+var CommitHash string
 
 func SPAMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -33,6 +36,8 @@ func SPAMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func main() {
+	slog.Info("Starting Hotify", "commit", CommitHash)
+
 	configPath := flag.String("config", "config.toml", "Path to the config file")
 	flag.Parse()
 
@@ -55,11 +60,8 @@ func main() {
 
 	manager := s.NewManager(&config, caddyClient)
 
-	err = manager.Init()
-	if err != nil {
-		slog.Error("Could not initialize services", "err", err)
-		os.Exit(1)
-	}
+	updater := update.NewSystemdUpdater(CommitHash)
+	go updater.Run()
 
 	e := echo.New()
 	e.HideBanner = true
@@ -86,6 +88,12 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	err = manager.Init()
+	if err != nil {
+		slog.Error("Could not initialize services", "err", err)
+		os.Exit(1)
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
