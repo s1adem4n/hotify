@@ -10,6 +10,7 @@ if [ -z "$1" ]; then
 fi
 
 cd webui
+bun install
 bun run build
 cd ..
 
