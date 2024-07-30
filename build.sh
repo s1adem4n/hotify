@@ -9,5 +9,9 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+cd webui
+bun run build
+cd ..
+
 # build the server and inject the commit hash
 go build -ldflags "-X main.CommitHash=$COMMIT_HASH" -o $1 server/main.go

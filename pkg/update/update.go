@@ -1,6 +1,7 @@
 package update
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -66,8 +67,12 @@ func (u *Updater) Update() error {
 	// build the binary
 	cmd := exec.Command("./build.sh", u.BinaryPath)
 	cmd.Dir = filepath.Join(u.RepoPath)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to build binary: %s", err)
+		logs := out.String()
+		return fmt.Errorf("failed to build binary: %s, %s", err, logs)
 	}
 
 	if u.UpdateCommand != "" {
