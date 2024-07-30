@@ -9,6 +9,11 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# when the second arg is test, change the commit hash to test
+if [ "$2" == "test" ]; then
+  COMMIT_HASH="test"
+fi
+
 cd webui
 bun install
 bun run build

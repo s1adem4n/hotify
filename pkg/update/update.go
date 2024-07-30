@@ -86,8 +86,6 @@ func (u *Updater) Update() error {
 }
 
 func (u *Updater) Run() {
-	slog.Info("Starting update loop", "hash", u.CommitHash)
-
 	for {
 		slog.Info("Checking for updates")
 
