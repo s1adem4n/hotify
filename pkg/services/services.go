@@ -114,8 +114,7 @@ func (s *Service) Init() error {
 		return err
 	}
 
-	err := s.Pull()
-	return err
+	return nil
 }
 
 func (s *Service) Update() error {

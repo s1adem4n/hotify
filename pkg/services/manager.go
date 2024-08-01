@@ -36,6 +36,11 @@ func (m *Manager) InitService(service *Service) error {
 		return err
 	}
 	if !isNewestCommit || service.Config.InitialBuild {
+		err = service.Pull()
+		if err != nil {
+			return err
+		}
+
 		err = service.Build()
 		if err != nil {
 			return err
