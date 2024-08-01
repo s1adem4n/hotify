@@ -5,6 +5,7 @@ import (
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
 	"hotify/pkg/git"
+	"log/slog"
 	"path/filepath"
 	"sync"
 )
@@ -42,6 +43,8 @@ func (m *Manager) InitService(service *Service) error {
 
 		service.Config.InitialBuild = false
 		m.Config.Save(m.Config.LoadPath)
+	} else {
+		slog.Info("Service is up to date, skipping build", "name", service.Config.Name)
 	}
 
 	err = service.Start()
