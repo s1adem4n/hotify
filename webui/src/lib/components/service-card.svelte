@@ -22,9 +22,16 @@
 
 <div class="flex flex-col rounded-xl border border-gray-100 px-4 py-3 shadow-sm">
 	<div class="flex items-center gap-2">
-		<span class="font-bold">
-			{service.config.name}
-		</span>
+		{#if service.config.proxy.match}
+			<a href="https://{service.config.proxy.match}" class="font-bold hover:underline">
+				{service.config.name}
+			</a>
+		{:else}
+			<span class="font-bold">
+				{service.config.name}
+			</span>
+		{/if}
+
 		<button
 			class="{service.status === ServiceStatus.Running
 				? 'text-red-500'
@@ -67,7 +74,7 @@
 			<ServiceProperty title="Proxy">
 				{#if service.config.proxy.match}
 					<div class="flex gap-2">
-						<a class="hover:underline" href={service.config.proxy.match}>
+						<a class="hover:underline" href="https://{service.config.proxy.match}">
 							{service.config.proxy.match}
 						</a>
 						<span> &rarr; </span>
