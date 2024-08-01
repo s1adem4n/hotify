@@ -30,13 +30,15 @@ type ServiceConfig struct {
 	Secret string `json:"secret"`
 	// Proxy configuration for Caddy
 	Proxy ProxyConfig `json:"proxy"`
+	// Initial build, mostly for internal use, but may be used to force a new build on startup
+	InitialBuild bool `json:"initialBuild"`
 }
 
 type Config struct {
 	// Path to the config file if loaded
 	LoadPath string `json:"-"`
 	// Services to manage
-	Services map[string]ServiceConfig `json:"services"`
+	Services map[string]*ServiceConfig `json:"services"`
 	// Address for management API and interface
 	Address string `json:"address"`
 	// Path to the services folder, where the services are cloned and built

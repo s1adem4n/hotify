@@ -10,6 +10,7 @@ Build = 'go mod vendor && go build -o build/htest'
 Restart = false
 MaxRestarts = 0
 Secret = 'verysecretgithubwebhooksecret'
+InitialBuild = true
 
 [Services.htest.Proxy]
 Match = '192.168.1.100'

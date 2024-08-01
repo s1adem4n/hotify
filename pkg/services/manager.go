@@ -4,6 +4,7 @@ import (
 	"errors"
 	"hotify/pkg/caddy"
 	"hotify/pkg/config"
+	"hotify/pkg/git"
 	"path/filepath"
 	"sync"
 )
@@ -28,10 +29,21 @@ func (m *Manager) InitService(service *Service) error {
 	if err != nil {
 		return err
 	}
-	err = service.Build()
+
+	isNewestCommit, err := git.IsNewestCommit(service.Path)
 	if err != nil {
 		return err
 	}
+	if !isNewestCommit || service.Config.InitialBuild {
+		err = service.Build()
+		if err != nil {
+			return err
+		}
+
+		service.Config.InitialBuild = false
+		m.Config.Save(m.Config.LoadPath)
+	}
+
 	err = service.Start()
 	if err != nil {
 		return err
@@ -43,7 +55,7 @@ func (m *Manager) InitService(service *Service) error {
 func (m *Manager) Init() error {
 	for key, serviceConfig := range m.Config.Services {
 		service := NewService(
-			&serviceConfig,
+			serviceConfig,
 			filepath.Join(m.Config.ServicesPath, serviceConfig.Name),
 			m.Caddy,
 		)
@@ -95,7 +107,7 @@ func (m *Manager) Create(config *config.ServiceConfig) error {
 		return errors.New("service already exists")
 	}
 
-	m.Config.Services[config.Name] = *config
+	m.Config.Services[config.Name] = config
 	err := m.Config.Save(m.Config.LoadPath)
 	if err != nil {
 		return err
