@@ -59,9 +59,7 @@ func main() {
 	}
 
 	manager := s.NewManager(&config, caddyClient)
-
 	updater := update.NewSystemdUpdater(CommitHash)
-	go updater.Run()
 
 	e := echo.New()
 	e.HideBanner = true
@@ -94,6 +92,10 @@ func main() {
 		slog.Error("Could not initialize services", "err", err)
 		os.Exit(1)
 	}
+
+	// start the updater AFTER all services are initialized
+	// ensures that there are no weird errors while updating services
+	go updater.Run()
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
