@@ -76,7 +76,7 @@ func (u *Updater) Update() error {
 	}
 
 	if u.UpdateCommand != "" {
-		cmd := exec.Command(u.UpdateCommand)
+		cmd := exec.Command("bash", "-c", u.UpdateCommand)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("failed to run update command: %s", err)
 		}
