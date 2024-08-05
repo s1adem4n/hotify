@@ -1,0 +1,10 @@
+# example service configuration file, to be placed in the repo of the service
+
+Name = "my-service"
+Description = "My service description"
+Build = "go build -o my-service"
+Run = "./my-service"
+
+[Environment]
+PORT = 8080
+ADDRESS = ""
