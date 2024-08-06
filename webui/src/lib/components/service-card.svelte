@@ -64,11 +64,11 @@
 			</ServiceProperty>
 
 			<ServiceProperty title="Run Command">
-				<span>{service.config.exec}</span>
+				<span class="font-mono">$ {service.config.exec}</span>
 			</ServiceProperty>
 
 			<ServiceProperty title="Build Command">
-				<span>{service.config.build}</span>
+				<span class="font-mono">$ {service.config.build}</span>
 			</ServiceProperty>
 
 			<ServiceProperty title="Proxy">
