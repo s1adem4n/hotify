@@ -19,4 +19,5 @@ export const services: Service[] = $state([]);
 export const loadServices = async () => {
 	const res = await client.services();
 	services.splice(0, services.length, ...res);
+	services.sort((a, b) => a.config.name.localeCompare(b.config.name));
 };
