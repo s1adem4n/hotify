@@ -195,7 +195,7 @@ func (s *Server) RestartService(c echo.Context) error {
 }
 
 func (s *Server) ServiceWebhook(c echo.Context) error {
-	signatureHeader := c.Request().Header.Get("X-Signature-256")
+	signatureHeader := c.Request().Header.Get("X-Hub-Signature-256")
 
 	name := c.Param("service")
 	service := s.Manager.Service(name)
@@ -211,7 +211,7 @@ func (s *Server) ServiceWebhook(c echo.Context) error {
 		}
 
 		if !VerifyRequest(body, signatureHeader, service.Config.Secret) {
-			slog.Warn("Invalid signature", "service", service.Config.Name)
+			slog.Warn("Invalid signature", "service", service.Config.Name, "signature", signatureHeader, "expected", service.Config.Secret)
 			return c.JSON(http.StatusForbidden, nil)
 		}
 	}
